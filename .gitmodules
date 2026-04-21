@@ -1,0 +1,9 @@
+[submodule "switchrr"]
+	path = switchrr
+	url = https://github.com/nimarchetti/switchrr.git
+[submodule "boardrr"]
+	path = boardrr
+	url = https://github.com/nimarchetti/boardrr.git
+[submodule "powrr"]
+	path = powrr
+	url = https://github.com/nimarchetti/powrr.git

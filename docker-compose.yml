@@ -1,0 +1,42 @@
+networks:
+  displayrr:
+    driver: bridge
+
+volumes:
+  boardrr_state:
+
+services:
+  switchrr:
+    build: ./switchrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    ports:
+      - "5556:5556"
+    env_file: .env
+
+  boardrr:
+    build: ./boardrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    env_file: .env
+    environment:
+      OUTPUT_MODE: zmq
+      MODE_NAME: uk_tdd
+      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5600
+      SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+    volumes:
+      - ./boardrr/config.json:/app/config.json:ro
+      - boardrr_state:/app/state.json
+
+  powrr:
+    build: ./powrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    env_file: .env
+    environment:
+      MODE_NAME: powrr
+      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5601
+      SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
