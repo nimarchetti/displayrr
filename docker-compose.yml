@@ -2,9 +2,6 @@ networks:
   displayrr:
     driver: bridge
 
-volumes:
-  boardrr_state:
-
 services:
   switchrr:
     build: ./switchrr
@@ -28,7 +25,7 @@ services:
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
     volumes:
       - ./boardrr/config.json:/app/config.json:ro
-      - boardrr_state:/app/state.json
+      - ./boardrr/state.json:/app/state.json
 
   powrr:
     build: ./powrr
