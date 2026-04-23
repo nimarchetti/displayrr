@@ -9,6 +9,7 @@ Parent stack repo for the Raspberry Pi display system. Brings up all display ser
 | switchrr | `./switchrr` | ZMQ routing daemon — forwards frames from active mode to Indicatrr, routes hardware events back |
 | boardrr | `./boardrr` | UK train departure display mode (256×64 OLED) |
 | powrr | `./powrr` | Solar power monitoring display mode (MQTT/Home Assistant) |
+| issrr | `./issrr` | ISS real-time tracker display mode — orbit, crew, docking, space weather, events, passes |
 
 ## Stack setup
 
@@ -27,6 +28,8 @@ docker compose up -d
 4. Add any new env vars to `.env` and `.env.sample`
 5. Add an entry to `MODE_REGISTRY` in `.env` (next available `toggle_position` 1–4)
 6. Commit `.gitmodules`, the submodule directory pointer, and `docker-compose.yml`
+
+> **Note:** `issrr` is built directly from `./issrr/` in this repo (not a submodule) and follows the same pattern without steps 1–2.
 
 ## Updating a submodule to latest
 

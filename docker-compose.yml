@@ -37,3 +37,14 @@ services:
       MODE_NAME: powrr
       SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5601
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+
+  issrr:
+    build: ./issrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    env_file: .env
+    environment:
+      MODE_NAME: issrr
+      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5602
+      SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
