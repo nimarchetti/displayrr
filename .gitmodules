@@ -7,3 +7,6 @@
 [submodule "powrr"]
 	path = powrr
 	url = https://github.com/nimarchetti/powrr.git
+[submodule "issrr"]
+	path = issrr
+	url = https://github.com/nimarchetti/issrr.git
