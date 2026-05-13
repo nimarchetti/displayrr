@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | boardrr | submodule `./boardrr` | UK train departure display mode (256×64 OLED) |
 | powrr | submodule `./powrr` | Solar power monitoring display mode (MQTT/Home Assistant) |
 | issrr | submodule `./issrr` | ISS real-time tracker display mode — orbit, crew, docking, space weather, events, passes |
-| tidrr | submodule `./tidrr` | Tide times display mode — graph, tidal character, moon/sun, marine conditions (toggle 4) |
+| tiderr | submodule `./tiderr` | Tide times display mode — graph, tidal character, moon/sun, marine conditions (toggle 4) |
 | webrr | local `./webrr` | FastAPI/WebSocket browser tap — serves a live view of the active frame over HTTP (port 8888) |
 
 ## Stack commands

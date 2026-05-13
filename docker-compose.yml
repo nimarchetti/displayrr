@@ -50,14 +50,14 @@ services:
       SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5602
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
 
-  tidrr:
-    build: ./tidrr
+  tiderr:
+    build: ./tiderr
     restart: unless-stopped
     networks:
       - displayrr
     env_file: .env
     environment:
-      MODE_NAME: tidrr
+      MODE_NAME: tiderr
       SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5603
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
 
