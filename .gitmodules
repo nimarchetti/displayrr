@@ -10,3 +10,6 @@
 [submodule "issrr"]
 	path = issrr
 	url = https://github.com/nimarchetti/issrr.git
+[submodule "tiderr"]
+	path = tiderr
+	url = https://github.com/nimarchetti/tiderr.git
