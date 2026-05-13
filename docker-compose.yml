@@ -23,6 +23,7 @@ services:
       MODE_NAME: uk_tdd
       SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5600
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+      TZ: Europe/London
     volumes:
       - ./boardrr/config.json:/app/config.json:ro
       - ./boardrr/state.json:/app/state.json
@@ -48,3 +49,27 @@ services:
       MODE_NAME: issrr
       SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5602
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+
+  tidrr:
+    build: ./tidrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    env_file: .env
+    environment:
+      MODE_NAME: tidrr
+      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5603
+      SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+
+  webrr:
+    build: ./webrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    env_file: .env
+    environment:
+      FRAME_TAP_ADDRESS: tcp://switchrr:5650
+      SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+      SWITCHRR_HW_EVENT_ADDRESS: tcp://switchrr:5556
+    ports:
+      - "8888:8888"
