@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/pi/code/cdnspace-iss-tracker/**)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

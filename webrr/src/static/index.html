@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webrr</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #aaa;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 16px;
+      gap: 22px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 11px;
+      color: #383838;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* ---- display ---- */
+    #display-wrap {
+      background: #000;
+      border: 1px solid #1e1e1e;
+      padding: 10px;
+      line-height: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 512px;
+      height: 128px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #no-signal {
+      width: 512px;
+      height: 128px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #282828;
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    /* ---- controls ---- */
+    .panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .label {
+      font-size: 9px;
+      color: #383838;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .row { display: flex; gap: 6px; align-items: center; }
+
+    button {
+      background: #141414;
+      color: #666;
+      border: 1px solid #222;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      border-radius: 2px;
+      transition: background 80ms, color 80ms, border-color 80ms;
+      white-space: nowrap;
+    }
+
+    button:hover  { background: #1c1c1c; color: #999; border-color: #333; }
+    button:active { background: #222; }
+
+    button.active {
+      background: #071407;
+      border-color: #1f4a1f;
+      color: #5a5;
+    }
+
+    button.enc-push { padding: 8px 10px; }
+
+    /* ---- status ---- */
+    #status { font-size: 10px; color: #2a2a2a; }
+  </style>
+</head>
+<body>
+
+  <h1>webrr / display debug</h1>
+
+  <div id="display-wrap">
+    <canvas id="display" width="256" height="64"></canvas>
+    <div id="no-signal">no signal</div>
+  </div>
+
+  <div class="panel">
+    <div class="label">toggle switch</div>
+    <div class="row" id="switches"></div>
+  </div>
+
+  <div class="panel">
+    <div class="label">encoder</div>
+    <div class="row">
+      <button onclick="encoderDelta(-1)">&#9664; ccw</button>
+      <button class="enc-push" onclick="encoderPush()" title="encoder push">&#9679;</button>
+      <button onclick="encoderDelta(1)">cw &#9654;</button>
+    </div>
+  </div>
+
+  <div id="status">connecting&hellip;</div>
+
+  <script>
+    const canvas = document.getElementById('display');
+    const ctx = canvas.getContext('2d');
+    const noSignal = document.getElementById('no-signal');
+    const statusEl = document.getElementById('status');
+    const switchesEl = document.getElementById('switches');
+
+    let modes = [];
+    let activeMode = '';
+
+    // ---- load config & build UI ----
+
+    async function init() {
+      try {
+        const res = await fetch('/api/modes');
+        const data = await res.json();
+        modes = data.modes || [];
+        buildSwitches();
+        setActiveMode(data.active_mode || '');
+      } catch (e) {
+        statusEl.textContent = 'failed to load config';
+      }
+      connectWS();
+    }
+
+    function buildSwitches() {
+      switchesEl.innerHTML = '';
+      modes.forEach(m => {
+        const btn = document.createElement('button');
+        btn.id = 'mode-btn-' + m.mode_name;
+        btn.textContent = m.display_name || m.mode_name;
+        btn.title = 'position ' + m.toggle_position;
+        btn.onclick = () => toggleSwitch(m.toggle_position);
+        switchesEl.appendChild(btn);
+      });
+    }
+
+    function setActiveMode(name) {
+      activeMode = name;
+      modes.forEach(m => {
+        const btn = document.getElementById('mode-btn-' + m.mode_name);
+        if (btn) btn.classList.toggle('active', m.mode_name === name);
+      });
+    }
+
+    // ---- WebSocket ----
+
+    function connectWS() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(proto + '//' + location.host + '/ws');
+      ws.binaryType = 'blob';
+
+      ws.onopen = () => { statusEl.textContent = 'connected'; };
+
+      ws.onclose = () => {
+        statusEl.textContent = 'disconnected — retrying in 3s…';
+        setTimeout(connectWS, 3000);
+      };
+
+      ws.onerror = () => { statusEl.textContent = 'websocket error'; };
+
+      ws.onmessage = async (e) => {
+        if (e.data instanceof Blob) {
+          try {
+            const bmp = await createImageBitmap(e.data);
+            noSignal.style.display = 'none';
+            canvas.style.display = 'block';
+            ctx.drawImage(bmp, 0, 0);
+          } catch (_) {}
+        } else {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.event === 'MODE_ACTIVE') setActiveMode(msg.mode);
+          } catch (_) {}
+        }
+      };
+    }
+
+    // ---- controls ----
+
+    function toggleSwitch(position) {
+      fetch('/event/toggle/' + position, { method: 'POST' }).catch(() => {});
+    }
+
+    function encoderDelta(delta) {
+      fetch('/event/encoder/delta/' + delta, { method: 'POST' }).catch(() => {});
+    }
+
+    function encoderPush() {
+      fetch('/event/encoder/push', { method: 'POST' }).catch(() => {});
+    }
+
+    init();
+  </script>
+</body>
+</html>

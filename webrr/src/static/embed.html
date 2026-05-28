@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>webrr embed</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    canvas {
+      display: block;
+      width: 512px;
+      height: 128px;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #no-signal {
+      width: 512px;
+      height: 128px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #282828;
+      font: 10px/1 'Courier New', monospace;
+      letter-spacing: 2px;
+    }
+
+    .row { display: flex; gap: 4px; align-items: center; }
+
+    button {
+      background: #141414;
+      color: #555;
+      border: 1px solid #222;
+      padding: 4px 10px;
+      cursor: pointer;
+      font: 10px/1 'Courier New', monospace;
+      border-radius: 2px;
+    }
+
+    button:hover  { background: #1c1c1c; color: #888; }
+    button:active { background: #222; }
+    button.active { background: #071407; border-color: #1f4a1f; color: #5a5; }
+    button.enc    { padding: 4px 7px; }
+  </style>
+</head>
+<body>
+
+  <div id="display-wrap">
+    <canvas id="display" width="256" height="64"></canvas>
+    <div id="no-signal">no signal</div>
+  </div>
+
+  <div class="row" id="switches"></div>
+
+  <div class="row">
+    <button class="enc" onclick="encoderDelta(-1)">&#9664;</button>
+    <button class="enc" onclick="encoderPush()">&#9679;</button>
+    <button class="enc" onclick="encoderDelta(1)">&#9654;</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('display');
+    const ctx = canvas.getContext('2d');
+    const noSignal = document.getElementById('no-signal');
+    const switchesEl = document.getElementById('switches');
+    let modes = [], activeMode = '';
+
+    async function init() {
+      const data = await fetch('/api/modes').then(r => r.json()).catch(() => ({modes: [], active_mode: ''}));
+      modes = data.modes || [];
+      activeMode = data.active_mode || '';
+      modes.forEach(m => {
+        const btn = document.createElement('button');
+        btn.id = 'mb-' + m.mode_name;
+        btn.textContent = m.display_name || m.mode_name;
+        btn.onclick = () => fetch('/event/toggle/' + m.toggle_position, {method: 'POST'}).catch(() => {});
+        if (m.mode_name === activeMode) btn.classList.add('active');
+        switchesEl.appendChild(btn);
+      });
+      connectWS();
+    }
+
+    function setActiveMode(name) {
+      activeMode = name;
+      modes.forEach(m => {
+        const btn = document.getElementById('mb-' + m.mode_name);
+        if (btn) btn.classList.toggle('active', m.mode_name === name);
+      });
+    }
+
+    function connectWS() {
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(proto + '//' + location.host + '/ws');
+      ws.binaryType = 'blob';
+      ws.onclose = () => setTimeout(connectWS, 3000);
+      ws.onmessage = async (e) => {
+        if (e.data instanceof Blob) {
+          const bmp = await createImageBitmap(e.data);
+          noSignal.style.display = 'none';
+          canvas.style.display = 'block';
+          ctx.drawImage(bmp, 0, 0);
+        } else {
+          try { const m = JSON.parse(e.data); if (m.event === 'MODE_ACTIVE') setActiveMode(m.mode); } catch(_) {}
+        }
+      };
+    }
+
+    function encoderDelta(d) { fetch('/event/encoder/delta/' + d, {method: 'POST'}).catch(() => {}); }
+    function encoderPush()   { fetch('/event/encoder/push',        {method: 'POST'}).catch(() => {}); }
+
+    init();
+  </script>
+</body>
+</html>

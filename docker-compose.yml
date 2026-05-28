@@ -21,7 +21,7 @@ services:
     environment:
       OUTPUT_MODE: zmq
       MODE_NAME: uk_tdd
-      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5600
+      SWITCHRR_FRAME_BIND_ADDRESS: tcp://0.0.0.0:5600
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
       TZ: Europe/London
     volumes:
@@ -36,7 +36,7 @@ services:
     env_file: .env
     environment:
       MODE_NAME: powrr
-      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5601
+      SWITCHRR_FRAME_BIND_ADDRESS: tcp://0.0.0.0:5601
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
 
   issrr:
@@ -47,7 +47,7 @@ services:
     env_file: .env
     environment:
       MODE_NAME: issrr
-      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5602
+      SWITCHRR_FRAME_BIND_ADDRESS: tcp://0.0.0.0:5602
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
 
   tiderr:
@@ -58,7 +58,7 @@ services:
     env_file: .env
     environment:
       MODE_NAME: tiderr
-      SWITCHRR_FRAME_ADDRESS: tcp://switchrr:5603
+      SWITCHRR_FRAME_BIND_ADDRESS: tcp://0.0.0.0:5603
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
 
   webrr:
