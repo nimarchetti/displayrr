@@ -23,27 +23,33 @@ EVENT_ADDRESS = os.environ["SWITCHRR_EVENT_ADDRESS"]
 HW_EVENT_ADDRESS = os.environ["SWITCHRR_HW_EVENT_ADDRESS"]
 
 
-def _load_mode_registry() -> list[dict]:
-    """Flatten modes from DISPLAY_REGISTRY, falling back to MODE_REGISTRY."""
+def _load_mode_registry() -> tuple[list[dict], str]:
+    """Return (modes, default_mode_name) from DISPLAY_REGISTRY or MODE_REGISTRY."""
     raw = os.environ.get("DISPLAY_REGISTRY", "").strip()
     if raw:
         try:
             registry = json.loads(raw)
             modes = []
+            default_mode = ""
             for display in registry:
-                for m in display.get("modes", []):
+                for idx, m in enumerate(display.get("modes", []), 1):
                     modes.append({
                         "mode_name": m.get("mode_name"),
                         "display_name": m.get("display_name", m.get("mode_name")),
                         "display_id": display.get("display_id"),
+                        "toggle_position": idx,
                     })
-            return modes
+                    if m.get("default") and not default_mode:
+                        default_mode = m.get("mode_name", "")
+            return modes, default_mode
         except (json.JSONDecodeError, TypeError):
             pass
-    return json.loads(os.environ.get("MODE_REGISTRY", "[]"))
+    modes = json.loads(os.environ.get("MODE_REGISTRY", "[]"))
+    default_mode = next((m["mode_name"] for m in modes if m.get("default")), "")
+    return modes, default_mode
 
 
-MODE_REGISTRY: list[dict] = _load_mode_registry()
+MODE_REGISTRY, _default_mode = _load_mode_registry()
 
 # ---------------------------------------------------------------------------
 # Shared state (threads → asyncio)
@@ -52,7 +58,7 @@ MODE_REGISTRY: list[dict] = _load_mode_registry()
 _latest_frame: bytes = b""
 _latest_frame_lock = threading.Lock()
 
-_active_mode: str = ""
+_active_mode: str = _default_mode
 _active_mode_lock = threading.Lock()
 
 _ws_clients: set[WebSocket] = set()
