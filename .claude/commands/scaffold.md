@@ -11,7 +11,7 @@ Ask the user the following questions (all in one message):
 3. **Data source** — where does the data come from? (e.g. a public API with a URL, MQTT, local file, no external data)
 4. **Screens** — list the screens (views) the mode should have. Each screen is one full-display layout the user cycles through with the encoder. Give each a short name and one sentence describing what it shows.
 5. **Encoder input** — does this mode need to respond to encoder rotation (ENCODER_DELTA) or button presses (ENCODER_PUSH)? If yes, describe the intended behaviour.
-6. **Pixel format** — `"L"` (greyscale, default, suits OLED) or `"RGB24"` (colour, for TFT displays)?
+6. **Pixel format** — `"RGB"` (recommended default — works on HUB75 full-colour and OLED, switchrr converts to greyscale for OLED displays automatically) or `"L"` (greyscale only, for intentionally monochrome modes)?
 
 ## Step 2 — Confirm and create the repo directory
 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     <ModeName>Mode().run()
 ```
 
-Fill in all `<placeholders>`. Use `"L"` for greyscale or `"RGB"` for colour depending on the user's choice.
+Fill in all `<placeholders>`. Use `"RGB"` by default; only use `"L"` if the user explicitly chose greyscale.
 
 For the port number in `SWITCHRR_FRAME_BIND_ADDRESS`: suggest `5604` (next available after existing modes). Tell the user to update this if it conflicts.
 

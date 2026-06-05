@@ -9,7 +9,8 @@ services:
     networks:
       - displayrr
     ports:
-      - "5556:5556"
+      - "5556:5556"   # OLED Indicatrr hardware events
+      - "5558:5558"   # HUB75 hub75pi hardware events
     env_file: .env
 
   boardrr:
@@ -17,6 +18,8 @@ services:
     restart: unless-stopped
     networks:
       - displayrr
+    ports:
+      - "5600:5600"
     env_file: .env
     environment:
       OUTPUT_MODE: zmq
@@ -60,6 +63,36 @@ services:
       MODE_NAME: tiderr
       SWITCHRR_FRAME_BIND_ADDRESS: tcp://0.0.0.0:5603
       SWITCHRR_EVENT_ADDRESS: tcp://switchrr:5557
+
+  claudrr:
+    build: ./claudrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    env_file: .env
+    environment:
+      MODE_NAME: claudrr
+      SWITCHRR_FRAME_BIND_ADDRESS: "tcp://0.0.0.0:5604"
+      SWITCHRR_EVENT_ADDRESS: "tcp://switchrr:5557"
+
+  relayrr:
+    build: ./relayrr
+    restart: unless-stopped
+    networks:
+      - displayrr
+    environment:
+      SOURCE_ADDR: tcp://boardrr:5600
+      PORT: "5700"
+    ports:
+      - "5700:5700"
+
+  firmwarerr:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - ./hub75rr:/usr/share/nginx/html:ro
+    ports:
+      - "8889:80"
 
   webrr:
     build: ./webrr
