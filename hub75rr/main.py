@@ -1,8 +1,5 @@
 import time
-import gc
 import micropython
-import machine
-machine.freq(240_000_000)
 from serial_client import SerialClient
 
 try:
