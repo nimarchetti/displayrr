@@ -1,0 +1,4 @@
+{
+  "version": "0.19.0",
+  "files": ["main.py", "serial_client.py", "config.py"]
+}
