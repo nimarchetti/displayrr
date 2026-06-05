@@ -7,6 +7,13 @@ try:
 except ImportError:
     raise RuntimeError("config.py missing — copy config.py.sample and edit it")
 
+# Optional: WiFi + hub75pi URL for button-driven mode switching.
+# Set HUB75PI_URL, WIFI_SSID, WIFI_PASSWORD in config.py to enable.
+try:
+    from config import HUB75PI_URL, WIFI_SSID, WIFI_PASSWORD
+    _buttons_enabled = True
+except ImportError:
+    _buttons_enabled = False
 
 # ---------------------------------------------------------------------------
 # Display
@@ -35,10 +42,54 @@ def _flip():
 
 
 # ---------------------------------------------------------------------------
+# Button input → hub75pi HTTP (optional, requires WiFi config in config.py)
+# ---------------------------------------------------------------------------
+_wlan = None
+
+if _buttons_enabled:
+    import network
+    import urequests
+    from pimoroni import Button
+
+    _btn_a = Button(14)   # A = previous mode
+    _btn_b = Button(15)   # B = next mode
+
+    _wlan = network.WLAN(network.STA_IF)
+    _wlan.active(True)
+    _wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    for _ in range(20):
+        if _wlan.isconnected():
+            break
+        time.sleep(0.5)
+    if _wlan.isconnected():
+        print("main: WiFi connected", _wlan.ifconfig()[0])
+    else:
+        print("main: WiFi failed — buttons disabled")
+        _wlan = None
+
+
+def _post_action(action: str) -> None:
+    if _wlan is None or not _wlan.isconnected():
+        return
+    try:
+        r = urequests.post(
+            HUB75PI_URL + "/event",
+            json={"action": action},
+            headers={"Content-Type": "application/json"},
+        )
+        r.close()
+    except Exception as e:
+        print("main: button POST failed:", e)
+
+
+# ---------------------------------------------------------------------------
 # Main loop — receive frames from Pi Zero over UART, render, flip
 # ---------------------------------------------------------------------------
 client = SerialClient(baudrate=2_000_000)
 print("main: ready, waiting for frames from Pi Zero")
+
+_last_a = False
+_last_b = False
 
 while True:
     try:
@@ -48,3 +99,14 @@ while True:
     except Exception as e:
         print("main: error:", e)
         time.sleep(1)
+
+    # Button edge detection — only fires once per press (not held)
+    if _buttons_enabled and _wlan is not None:
+        a = _btn_a.is_pressed
+        b = _btn_b.is_pressed
+        if a and not _last_a:
+            _post_action("prev")
+        if b and not _last_b:
+            _post_action("next")
+        _last_a = a
+        _last_b = b

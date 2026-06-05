@@ -1,7 +1,11 @@
-WIFI_SSID     = "your-network-name"
-WIFI_PASSWORD = "your-wifi-password"
-OTA_URL       = "http://192.168.1.x:8889"   # Pi LAN IP, firmwarerr port
-FRAME_HOST    = "192.168.1.x"               # same Pi
-FRAME_PORT    = 5700                          # relayrr HTTP port
-PANEL_W, PANEL_H = 256, 64                   # physical panel dimensions
-WIDTH, HEIGHT    = 256, 64                   # source frame dimensions from relayrr
+PANEL_W, PANEL_H = 256, 64   # physical panel dimensions
+WIDTH, HEIGHT    = 256, 64   # source frame dimensions
+
+# Optional OTA update support (via firmwarerr nginx service)
+OTA_URL = "http://192.168.1.x:8889"   # Pi LAN IP, firmwarerr port
+
+# Optional: mode-switching buttons (A=prev, B=next) via WiFi → hub75pi HTTP.
+# Set all three to enable; leave commented out to disable.
+# WIFI_SSID     = "your-network-name"
+# WIFI_PASSWORD = "your-wifi-password"
+# HUB75PI_URL   = "http://192.168.1.x:5580"   # Pi Zero W LAN IP, hub75pi HTTP port
