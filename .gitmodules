@@ -13,3 +13,9 @@
 [submodule "tiderr"]
 	path = tiderr
 	url = https://github.com/nimarchetti/tiderr.git
+[submodule "hub75pi"]
+	path = hub75pi
+	url = https://github.com/nimarchetti/hub75pi.git
+[submodule "hub75rr"]
+	path = hub75rr
+	url = https://github.com/nimarchetti/hub75rr.git
