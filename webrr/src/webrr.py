@@ -22,9 +22,12 @@ FRAME_TAP_ADDRESS = os.environ["FRAME_TAP_ADDRESS"]
 EVENT_ADDRESS = os.environ["SWITCHRR_EVENT_ADDRESS"]
 HW_EVENT_ADDRESS = os.environ["SWITCHRR_HW_EVENT_ADDRESS"]
 
+# Which display to tap — defaults to "default", overridable via env
+WEBRR_DISPLAY_ID = os.environ.get("WEBRR_DISPLAY_ID", "default")
+
 
 def _load_mode_registry() -> tuple[list[dict], str]:
-    """Return (modes, default_mode_name) from DISPLAY_REGISTRY or MODE_REGISTRY."""
+    """Return (modes, default_mode_name) for WEBRR_DISPLAY_ID from DISPLAY_REGISTRY."""
     raw = os.environ.get("DISPLAY_REGISTRY", "").strip()
     if raw:
         try:
@@ -32,6 +35,8 @@ def _load_mode_registry() -> tuple[list[dict], str]:
             modes = []
             default_mode = ""
             for display in registry:
+                if display.get("display_id") != WEBRR_DISPLAY_ID:
+                    continue
                 for idx, m in enumerate(display.get("modes", []), 1):
                     modes.append({
                         "mode_name": m.get("mode_name"),
@@ -91,6 +96,8 @@ def _frame_thread() -> None:
             continue
         try:
             header = json.loads(parts[0])
+            if header.get("display_id", WEBRR_DISPLAY_ID) != WEBRR_DISPLAY_ID:
+                continue
             w, h = header["width"], header["height"]
             pil_mode = "RGB" if header.get("pixel_format", "RGB24") == "RGB24" else "L"
             img = Image.frombytes(pil_mode, (w, h), parts[1])
@@ -118,6 +125,8 @@ def _event_thread() -> None:
         try:
             msg = json.loads(raw)
         except Exception:
+            continue
+        if msg.get("display_id", WEBRR_DISPLAY_ID) != WEBRR_DISPLAY_ID:
             continue
         event = msg.get("event")
         if event == "MODE_ACTIVE":
